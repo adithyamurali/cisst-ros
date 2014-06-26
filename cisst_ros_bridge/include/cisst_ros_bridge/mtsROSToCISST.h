@@ -41,6 +41,7 @@ http://www.cisst.org/cisst/license.txt.
 
 #include <geometry_msgs/Transform.h>
 #include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Wrench.h>
 
 #include <sensor_msgs/JointState.h>
@@ -59,6 +60,8 @@ void mtsROSToCISST(const geometry_msgs::Vector3 &rosData, vct3 &cisstData);
 void mtsROSToCISST(const geometry_msgs::Quaternion &rosData, vctMatRot3 &cisstData);
 void mtsROSToCISST(const geometry_msgs::Pose &rosData, prmPositionCartesianGet &cisstData);
 void mtsROSToCISST(const geometry_msgs::Pose &rosData, prmPositionCartesianSet &cisstData);
+void mtsROSToCISST(const geometry_msgs::PoseStamped &rosData, prmPositionCartesianGet &cisstData);
+void mtsROSToCISST(const geometry_msgs::PoseStamped &rosData, prmPositionCartesianSet &cisstData);
 void mtsROSToCISST(const geometry_msgs::Pose &rosData, vctFrm4x4 &cisstData);
 void mtsROSToCISST(const geometry_msgs::Transform &rosData, prmPositionCartesianGet &cisstData);
 void mtsROSToCISST(const geometry_msgs::Wrench &rosData, prmForceCartesianSet &cisstData);

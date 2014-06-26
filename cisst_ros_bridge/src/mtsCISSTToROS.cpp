@@ -73,14 +73,14 @@ void mtsCISSTToROS(const prmPositionCartesianGet &cisstData, geometry_msgs::Pose
  void mtsCISSTToROS(const prmPositionCartesianGet &cisstData, geometry_msgs::PoseStamped &rosData)
  {
      vctQuatRot3 quat(cisstData.Position().Rotation(), VCT_NORMALIZE);
-     rosData.orientation.x = quat.X();
-     rosData.orientation.y = quat.Y();
-     rosData.orientation.z = quat.Z();
-     rosData.orientation.w = quat.W();
-     rosData.position.x = cisstData.Position().Translation().X();
-     rosData.position.y = cisstData.Position().Translation().Y();
-     rosData.position.z = cisstData.Position().Translation().Z();
-     rosData.header.stamp = ros::time::Now()
+     rosData.pose.orientation.x = quat.X();
+     rosData.pose.orientation.y = quat.Y();
+     rosData.pose.orientation.z = quat.Z();
+     rosData.pose.orientation.w = quat.W();
+     rosData.pose.position.x = cisstData.Position().Translation().X();
+     rosData.pose.position.y = cisstData.Position().Translation().Y();
+     rosData.pose.position.z = cisstData.Position().Translation().Z();
+//     rosData.header.stamp = ros::time::Now();
  }
 
 

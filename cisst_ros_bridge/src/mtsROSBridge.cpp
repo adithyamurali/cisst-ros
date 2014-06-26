@@ -23,6 +23,7 @@ http://www.cisst.org/cisst/license.txt.
 #include <cisstMultiTask/mtsInterfaceProvided.h>
 #include <signal.h>   // ROS only supports Linux
 #include "cisst_ros_bridge/mtsROSBridge.h"
+#include <ros/ros.h>
 
 CMN_IMPLEMENT_SERVICES(mtsROSBridge);
 
@@ -60,12 +61,22 @@ void mtsROSBridge::Run(void)
     ProcessQueuedCommands();
     ProcessQueuedEvents();
 
-    const PublishersType::iterator end = Publishers.end();
-    PublishersType::iterator iter;
-    for (iter = Publishers.begin();
+    ros::Time startTime = ros::Time::now();
+
+    const PublishersTypeStamped::iterator end = PublishersStamped.end();
+    PublishersTypeStamped::iterator iter;
+    for (iter = PublishersStamped.begin();
          iter != end;
          ++iter) {
-        (*iter)->Execute();
+        (*iter)->Execute(startTime);
+    }
+
+    const PublishersType::iterator end2 = Publishers.end();
+    PublishersType::iterator iter2;
+    for (iter2 = Publishers.begin();
+         iter2 != end2;
+         ++iter2) {
+        (*iter2)->Execute();
     }
 
     if (mSpin) ros::spinOnce();

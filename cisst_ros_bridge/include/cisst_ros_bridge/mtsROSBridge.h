@@ -96,7 +96,6 @@ private:
     std_msgs::Empty mEmptyMsg;
 };
 
-
 template <typename _mtsType, typename _rosType>
 class mtsROSEventWritePublisher: public mtsROSPublisherBase
 {
@@ -118,6 +117,48 @@ protected:
     _rosType ROSData;
 };
 
+// ----------------------------------------------------
+// Publisher Stamped
+// ----------------------------------------------------
+
+
+class mtsROSPublisherBaseStamped
+{
+public:
+    //! Function used to pull data from the cisst component
+    mtsFunctionRead Function;
+    //! ROS publisher to publish the converted data
+    ros::Publisher Publisher;
+
+    virtual bool Execute(const ros::Time & startTime) = 0;
+};
+
+
+class mtsROSPublisherStamped: public mtsROSPublisherBaseStamped
+{
+public:
+    mtsROSPublisherStamped(const std::string & rosTopicName, ros::NodeHandle & node) {
+        Publisher = node.advertise<geometry_msgs::PoseStamped>(rosTopicName, 5);
+    }
+    ~mtsROSPublisherStamped() {
+        //! \todo, how to remove the topic from the node?
+    }
+
+    bool Execute(const ros::Time & startTime) {
+        mtsExecutionResult result = Function(CISSTData);
+
+        if (result) {
+            mtsCISSTToROS(CISSTData, ROSData);
+            ROSData.header.stamp = startTime;
+            Publisher.publish(ROSData);
+            return true;
+        }
+    }
+
+protected:
+    prmPositionCartesianGet CISSTData;
+    geometry_msgs::PoseStamped ROSData;
+};
 
 // ----------------------------------------------------
 // Subscriber
@@ -217,6 +258,10 @@ public:
                                      const std::string & functionName,
                                      const std::string & topicName);
 
+    bool AddPublisherFromReadCommandStamped(const std::string & interfaceRequiredName,
+                                     const std::string & functionName,
+                                     const std::string & topicName);
+
     bool AddPublisherFromEventVoid(const std::string & interfaceRequiredName,
                                    const std::string & eventName,
                                    const std::string & topicName);
@@ -233,7 +278,7 @@ public:
                                      const std::string & functionName,
                                      const std::string & topicName);
 
-    bool AddSubscriberToVoidCommand(const std::string & interfaceRequiredName,
+    bool AddSubscriberToVoidCommand(const std::string & interfaceRequiredNamPublishersTypee,
                                     const std::string & functionName,
                                     const std::string & topicName);
 
@@ -241,6 +286,10 @@ protected:
     //! list of publishers
     typedef std::list<mtsROSPublisherBase*> PublishersType;
     PublishersType Publishers;
+
+    //! list of publishers
+    typedef std::list<mtsROSPublisherBaseStamped*> PublishersTypeStamped;
+    PublishersTypeStamped PublishersStamped;
 
     //! list of subscribers
     typedef std::list<mtsROSSubscriberBase*> SubscribersType;
@@ -337,6 +386,65 @@ bool mtsROSBridge::AddPublisherFromEventWrite(const std::string &interfaceRequir
     Publishers.push_back(newPublisher);
     return true;
 }
+
+// ----------------------------------------------------
+// Method for Adding Publishers !!! Only for StampedPoses
+// ----------------------------------------------------
+
+bool mtsROSBridge::AddPublisherFromReadCommandStamped(const std::string & interfaceRequiredName,
+                                               const std::string & functionName,
+                                               const std::string & topicName)
+{
+    // check if the interface exists of try to create one
+    mtsInterfaceRequired * interfaceRequired = this->GetInterfaceRequired(interfaceRequiredName);
+    if (!interfaceRequired) {
+        interfaceRequired = this->AddInterfaceRequired(interfaceRequiredName);
+    }
+    if (!interfaceRequired) {
+        ROS_ERROR("mtsROS::AddPublisherFromReadCommandStamped: failed to create required interface.");
+        CMN_LOG_CLASS_INIT_ERROR << "AddPublisherFromReadCommandStamped: faild to create required interface \""
+                                 << interfaceRequiredName << "\"" << std::endl;
+        return false;
+    }
+    mtsROSPublisherBaseStamped * newPublisher = new mtsROSPublisherStamped(topicName, *(this->Node));
+    if (!interfaceRequired->AddFunction(functionName, newPublisher->Function)) {
+        ROS_ERROR("mtsROS::AddPublisherFromReadCommandStamped: failed to create function.");
+        CMN_LOG_CLASS_INIT_ERROR << "AddPublisherFromReadCommandStamped: faild to create function \""
+                                 << functionName << "\"" << std::endl;
+        delete newPublisher;
+        return false;
+    }
+    PublishersStamped.push_back(newPublisher);
+    return true;
+}
+
+//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
+//            "PSM1", "GetPositionCartesian", "/dvrk_psm1/joint_position_cartesian");
+//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
+//            "PSM2", "GetPositionCartesian", "/dvrk_psm2/joint_position_cartesian");
+//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
+//            "MTML", "GetPositionCartesian", "/dvrk_mtml/joint_position_cartesian");
+//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
+//            "MTMR", "GetPositionCartesian", "/dvrk_mtmr/joint_position_cartesian");
+
+//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
+//            "PSM1", "SetRobotControlState", "/dvrk_psm1/set_robot_state");
+//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
+//            "PSM1", "SetPositionCartesian", "/dvrk_psm1/set_cartesian_pose");
+
+//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
+//            "PSM2", "SetRobotControlState", "/dvrk_psm2/set_robot_state");
+//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
+//            "PSM2", "SetPositionCartesian", "/dvrk_psm2/set_cartesian_pose");
+//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
+//            "MTML", "SetRobotControlState", "/dvrk_mtml/set_robot_state");
+//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
+//            "MTML", "SetPositionCartesian", "/dvrk_mtml/set_cartesian_pose");
+//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
+//            "MTMR", "SetRobotControlState", "/dvrk_mtmr/set_robot_state");
+//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
+//            "MTMR", "SetPositionCartesian", "/dvrk_mtmr/set_cartesian_pose");
+
 
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsROSBridge);
