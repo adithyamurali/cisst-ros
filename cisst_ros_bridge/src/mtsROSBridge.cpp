@@ -110,7 +110,7 @@ bool mtsROSBridge::AddSubscriberToVoidCommand(const std::string &interfaceRequir
         return false;
     }
 
-    mtsROSSubscriberVoid* newSubscriber = new mtsROSSubscriberVoid(topicName, *(this->Node));
+    mtsROSSubscriberVoid * newSubscriber = new mtsROSSubscriberVoid(topicName, *(this->Node));
     if (!interfaceRequired->AddFunction(functionName, newSubscriber->FunctionVoid)) {
       ROS_ERROR("mtsROS::AddSubscriberToVoidCommand: failed to create function.");
       CMN_LOG_CLASS_INIT_ERROR << "AddSubscriberToVoidCommand: failed to create function \""

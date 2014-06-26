@@ -21,6 +21,7 @@ http://www.cisst.org/cisst/license.txt.
 */
 
 #include "cisst_ros_bridge/mtsCISSTToROS.h"
+#include "ros/ros.h"
 
 void mtsCISSTToROS(const double &cisstData, std_msgs::Float32 &rosData)
 {
@@ -68,6 +69,20 @@ void mtsCISSTToROS(const prmPositionCartesianGet &cisstData, geometry_msgs::Pose
     rosData.position.y = cisstData.Position().Translation().Y();
     rosData.position.z = cisstData.Position().Translation().Z();
 }
+
+ void mtsCISSTToROS(const prmPositionCartesianGet &cisstData, geometry_msgs::PoseStamped &rosData)
+ {
+     vctQuatRot3 quat(cisstData.Position().Rotation(), VCT_NORMALIZE);
+     rosData.orientation.x = quat.X();
+     rosData.orientation.y = quat.Y();
+     rosData.orientation.z = quat.Z();
+     rosData.orientation.w = quat.W();
+     rosData.position.x = cisstData.Position().Translation().X();
+     rosData.position.y = cisstData.Position().Translation().Y();
+     rosData.position.z = cisstData.Position().Translation().Z();
+     rosData.header.stamp = ros::time::Now()
+ }
+
 
 void mtsCISSTToROS(const vctFrm4x4 &cisstData, geometry_msgs::Pose &rosData)
 {

@@ -13,6 +13,8 @@ find_package(catkin REQUIRED COMPONENTS
   cisst_msgs
   )
 
+#set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /home/davinci/dev2/cisst/cisst-saw/cisst/cmake)
+
 set (REQUIRED_CISST_LIBRARIES 
   cisstCommon
   cisstVector
@@ -23,9 +25,15 @@ set (REQUIRED_CISST_LIBRARIES
 
 # find cisst and make sure the required libraries have been compiled
 find_package (cisst REQUIRED ${REQUIRED_CISST_LIBRARIES})
-include (${CISST_USE_FILE})
+if (cisst_FOUND)
+  include (${CISST_USE_FILE})
+  MESSAGE(${CISST_USE_FILE})
+endif(cisst_FOUND)
 
+#include(/home/davinci/dev/cisst/build/cisst/share/cisst-1.0/cmake/Usecisst.cmake)
+#include(/home/davinci/dev2/cisst/build/cisst/share/cisst-1.0/cmake/Usercisst.cmake)
 # catkin_python_setup()
+#/home/davinci/dev/cisst/build/cisst/share/cisst-1.0/cmake/Usecisst.cmake
 
 catkin_package(
   INCLUDE_DIRS include
