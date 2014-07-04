@@ -418,34 +418,6 @@ bool mtsROSBridge::AddPublisherFromReadCommandStamped(const std::string & interf
     return true;
 }
 
-//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
-//            "PSM1", "GetPositionCartesian", "/dvrk_psm1/joint_position_cartesian");
-//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
-//            "PSM2", "GetPositionCartesian", "/dvrk_psm2/joint_position_cartesian");
-//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
-//            "MTML", "GetPositionCartesian", "/dvrk_mtml/joint_position_cartesian");
-//rosBridge.AddPublisherFromReadCommand<prmPositionCartesianGet, geometry_msgs::PoseStamped>(
-//            "MTMR", "GetPositionCartesian", "/dvrk_mtmr/joint_position_cartesian");
-
-//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
-//            "PSM1", "SetRobotControlState", "/dvrk_psm1/set_robot_state");
-//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
-//            "PSM1", "SetPositionCartesian", "/dvrk_psm1/set_cartesian_pose");
-
-//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
-//            "PSM2", "SetRobotControlState", "/dvrk_psm2/set_robot_state");
-//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
-//            "PSM2", "SetPositionCartesian", "/dvrk_psm2/set_cartesian_pose");
-//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
-//            "MTML", "SetRobotControlState", "/dvrk_mtml/set_robot_state");
-//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
-//            "MTML", "SetPositionCartesian", "/dvrk_mtml/set_cartesian_pose");
-//rosBridge.AddSubscriberToWriteCommand<std::string , std_msgs::String>(
-//            "MTMR", "SetRobotControlState", "/dvrk_mtmr/set_robot_state");
-//rosBridge.AddSubscriberToWriteCommand<prmPositionCartesianSet, geometry_msgs::PoseStamped>(
-//            "MTMR", "SetPositionCartesian", "/dvrk_mtmr/set_cartesian_pose");
-
-
 
 CMN_DECLARE_SERVICES_INSTANTIATION(mtsROSBridge);
 
