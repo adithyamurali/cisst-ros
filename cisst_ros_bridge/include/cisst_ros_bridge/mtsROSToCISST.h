@@ -63,6 +63,7 @@ void mtsROSToCISST(const geometry_msgs::Pose &rosData, prmPositionCartesianSet &
 void mtsROSToCISST(const geometry_msgs::PoseStamped &rosData, prmPositionCartesianGet &cisstData);
 void mtsROSToCISST(const geometry_msgs::PoseStamped &rosData, prmPositionCartesianSet &cisstData);
 void mtsROSToCISST(const geometry_msgs::Pose &rosData, vctFrm4x4 &cisstData);
+void mtsROSToCISST(const geometry_msgs::PoseStamped &rosData, vctFrm4x4 &cisstData);
 void mtsROSToCISST(const geometry_msgs::Transform &rosData, prmPositionCartesianGet &cisstData);
 void mtsROSToCISST(const geometry_msgs::Wrench &rosData, prmForceCartesianSet &cisstData);
 

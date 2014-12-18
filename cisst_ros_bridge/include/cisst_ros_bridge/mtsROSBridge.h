@@ -4,6 +4,7 @@
 /*
   $Id: mtsROSBridge.h 4367 2013-07-17 02:47:21Z zchen24 $
 
+  Modified by Adithya Murali, UC Berkeley, 2014-08-15
   Author(s):  Anton Deguet, Zihan Chen, Adnan Munawar
   Created on: 2013-05-21
 
@@ -30,10 +31,14 @@ http://www.cisst.org/cisst/license.txt.
 // ros include
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
+#include <fstream>
+#include <iostream>
+using namespace std;
 
 // conversion methods
 #include "cisst_ros_bridge/mtsCISSTToROS.h"
 #include "cisst_ros_bridge/mtsROSToCISST.h"
+#include <cisstParameterTypes/prmEventButton.h>
 
 
 // ----------------------------------------------------
@@ -77,6 +82,11 @@ protected:
     _rosType ROSData;
 };
 
+// ----------------------------------------------------
+// Event Publishers
+// ----------------------------------------------------
+
+
 class mtsROSEventVoidPublisher: public mtsROSPublisherBase
 {
 public:
@@ -118,6 +128,41 @@ protected:
 };
 
 // ----------------------------------------------------
+// Event Publishers - Continuously publish their event boolean values
+// ----------------------------------------------------
+
+template <typename _mtsType, typename _rosType>
+class mtsROSEventWritePublisherContinuous: public mtsROSPublisherBase
+{
+public:
+    mtsROSEventWritePublisherContinuous(const std::string & rosTopicName, ros::NodeHandle & node){
+      Publisher = node.advertise<_rosType>(rosTopicName, 5);
+      data = false;
+    }
+    ~mtsROSEventWritePublisherContinuous(){}
+
+    bool Execute(void){
+         mtsCISSTToROS(data, ROSData);
+         Publisher.publish(ROSData);
+         return true;
+    }
+
+    void EventHandler(const _mtsType& CISSTData)
+    {
+        if (CISSTData.Type() == prmEventButton::PRESSED) {
+            data = true;
+        } else {
+            data = false;
+        }
+    }
+
+protected:
+    _rosType ROSData;
+    bool data;
+};
+
+
+// ----------------------------------------------------
 // Publisher Stamped
 // ----------------------------------------------------
 
@@ -130,26 +175,37 @@ public:
     //! ROS publisher to publish the converted data
     ros::Publisher Publisher;
 
-    virtual bool Execute(const ros::Time & startTime) = 0;
+    virtual bool Execute(const ros::Time & timestamp) = 0;
 };
 
 
 class mtsROSPublisherStamped: public mtsROSPublisherBaseStamped
 {
 public:
-    mtsROSPublisherStamped(const std::string & rosTopicName, ros::NodeHandle & node) {
+    mtsROSPublisherStamped(const std::string & rosTopicName, ros::NodeHandle & node, const std::string& frame) {
+        this->frame = frame;
         Publisher = node.advertise<geometry_msgs::PoseStamped>(rosTopicName, 5);
+        file.open("/home/davinci/dev/cisst/catkin_ws/src/dvrk-ros/dvrk_robot/scripts/data/CISSTvsROS.txt");
     }
     ~mtsROSPublisherStamped() {
         //! \todo, how to remove the topic from the node?
+        file.close();
     }
 
-    bool Execute(const ros::Time & startTime) {
+    virtual bool Execute(const ros::Time & timestamp) {
         mtsExecutionResult result = Function(CISSTData);
 
         if (result) {
             mtsCISSTToROS(CISSTData, ROSData);
-            ROSData.header.stamp = startTime;
+            ROSData.header.stamp = timestamp;
+            ROSData.header.frame_id = frame;
+
+            double dX = ROSData.pose.position.x - CISSTData.Position().Translation().X();
+            double dY = ROSData.pose.position.y - CISSTData.Position().Translation().Y();
+            double dZ = ROSData.pose.position.z - CISSTData.Position().Translation().Z();
+
+            file << dX << " " << dY << " " << dZ << endl;
+
             Publisher.publish(ROSData);
             return true;
         }
@@ -158,6 +214,68 @@ public:
 protected:
     prmPositionCartesianGet CISSTData;
     geometry_msgs::PoseStamped ROSData;
+    std::string frame;
+
+    ofstream file;
+
+};
+
+class mtsROSJointPublisher : public mtsROSPublisherBaseStamped
+{
+public:
+    mtsROSJointPublisher(ros::NodeHandle & node,const std::vector<std::string> & jointNamesList) {
+        Publisher = node.advertise<sensor_msgs::JointState>("/joint_states", 5);
+        jointNames = jointNamesList;
+    }
+    ~mtsROSJointPublisher() {
+        //! \todo, how to remove the topic from the node?
+    }
+
+    bool Execute(const ros::Time & timestamp) {
+        mtsExecutionResult result = Function(CISSTData);
+        mtsExecutionResult result2 = Function2(CISSTData2);
+
+        if (result && result2) {
+            mtsCISSTToROS(CISSTData, CISSTData2, ROSData);
+
+            ROSData.header.stamp = timestamp;
+
+            ROSData.name = jointNames;
+
+//            ROSData.position.push_back(ROSData.position[1]);
+
+            if (!ROSData.position.empty()) {
+                ROSData.name.push_back("one_outer_pitch_joint_2"); ROSData.position.push_back(ROSData.position[8]);
+                ROSData.name.push_back("two_outer_pitch_joint_2"); ROSData.position.push_back(ROSData.position[1]);
+
+                ROSData.name.push_back("one_outer_pitch_joint_3"); ROSData.position.push_back(-ROSData.position[8]);
+                ROSData.name.push_back("two_outer_pitch_joint_3"); ROSData.position.push_back(-ROSData.position[1]);
+
+                ROSData.name.push_back("one_outer_pitch_joint_4"); ROSData.position.push_back(-ROSData.position[8]);
+                ROSData.name.push_back("two_outer_pitch_joint_4"); ROSData.position.push_back(-ROSData.position[1]);
+
+                ROSData.name.push_back("one_outer_pitch_joint_5"); ROSData.position.push_back(ROSData.position[8]);
+                ROSData.name.push_back("two_outer_pitch_joint_5"); ROSData.position.push_back(ROSData.position[1]);
+
+                ROSData.name.push_back("one_outer_wrist_open_angle_joint_2"); ROSData.position.push_back(-ROSData.position[13]);
+                ROSData.name.push_back("two_outer_wrist_open_angle_joint_2"); ROSData.position.push_back(-ROSData.position[6]);
+
+                ROSData.name.push_back("one_outer_pitch_joint"); ROSData.position.push_back(ROSData.position[8]);
+                ROSData.name.push_back("two_outer_pitch_joint"); ROSData.position.push_back(ROSData.position[1]);
+
+                Publisher.publish(ROSData);
+            }
+            return true;
+        }
+    }
+    //! Function used to pull data from the cisst component
+    mtsFunctionRead Function2;
+
+protected:
+    prmPositionJointGet CISSTData;
+    prmPositionJointGet CISSTData2;
+    sensor_msgs::JointState ROSData;
+    std::vector<std::string> jointNames;
 };
 
 // ----------------------------------------------------
@@ -260,7 +378,8 @@ public:
 
     bool AddPublisherFromReadCommandStamped(const std::string & interfaceRequiredName,
                                      const std::string & functionName,
-                                     const std::string & topicName);
+                                     const std::string & topicName,
+                                            const std::string& frame);
 
     bool AddPublisherFromEventVoid(const std::string & interfaceRequiredName,
                                    const std::string & eventName,
@@ -271,6 +390,16 @@ public:
                                     const std::string & eventName,
                                     const std::string & topicName);
 
+    template <typename _mtsType, typename _rosType>
+    bool AddPublisherFromEventWriteContinuous(const std::string & interfaceRequiredName,
+                                    const std::string & eventName,
+                                    const std::string & topicName);
+
+    bool AddJointPublisher(const std::string & interfaceRequiredName,
+                           const std::string & functionName,
+                           const std::string & interfaceRequiredName2,
+                          const std::string & functionName2,
+                          const std::vector<std::string>& jointNames);
 
     // --------- Subscriber ------------------
     template <typename _mtsType, typename _rosType>
@@ -388,12 +517,42 @@ bool mtsROSBridge::AddPublisherFromEventWrite(const std::string &interfaceRequir
 }
 
 // ----------------------------------------------------
+// Method for Adding Event Publishers that continuous publish Boolean data values in the execute, not just in EventHandler
+// ----------------------------------------------------
+
+template <typename _mtsType, typename _rosType>
+bool mtsROSBridge::AddPublisherFromEventWriteContinuous(const std::string &interfaceRequiredName,
+                                              const std::string &eventName,
+                                              const std::string &topicName)
+{
+    // check if the interface exists of try to create one
+    mtsInterfaceRequired * interfaceRequired = this->GetInterfaceRequired(interfaceRequiredName);
+    if (!interfaceRequired) {
+        interfaceRequired = this->AddInterfaceRequired(interfaceRequiredName);
+    }
+
+    mtsROSEventWritePublisherContinuous<_mtsType, _rosType>* newPublisher = new mtsROSEventWritePublisherContinuous<_mtsType, _rosType>(topicName, *(this->Node));
+    if (!interfaceRequired->AddEventHandlerWrite(&mtsROSEventWritePublisherContinuous<_mtsType, _rosType>::EventHandler, newPublisher, eventName))
+    {
+        ROS_ERROR("mtsROS::mtsROSEventWritePublisher: failed to create required interface.");
+        CMN_LOG_CLASS_INIT_ERROR << "mtsROSEventWritePublisher: faild to create required interface \""
+                                 << interfaceRequiredName << "\"" << std::endl;
+        delete newPublisher;
+        return false;
+    }
+    Publishers.push_back(newPublisher);
+    return true;
+}
+
+
+// ----------------------------------------------------
 // Method for Adding Publishers !!! Only for StampedPoses
 // ----------------------------------------------------
 
 bool mtsROSBridge::AddPublisherFromReadCommandStamped(const std::string & interfaceRequiredName,
                                                const std::string & functionName,
-                                               const std::string & topicName)
+                                               const std::string & topicName,
+                                                      const std::string& frame)
 {
     // check if the interface exists of try to create one
     mtsInterfaceRequired * interfaceRequired = this->GetInterfaceRequired(interfaceRequiredName);
@@ -406,7 +565,7 @@ bool mtsROSBridge::AddPublisherFromReadCommandStamped(const std::string & interf
                                  << interfaceRequiredName << "\"" << std::endl;
         return false;
     }
-    mtsROSPublisherBaseStamped * newPublisher = new mtsROSPublisherStamped(topicName, *(this->Node));
+    mtsROSPublisherBaseStamped * newPublisher = new mtsROSPublisherStamped(topicName, *(this->Node),frame);
     if (!interfaceRequired->AddFunction(functionName, newPublisher->Function)) {
         ROS_ERROR("mtsROS::AddPublisherFromReadCommandStamped: failed to create function.");
         CMN_LOG_CLASS_INIT_ERROR << "AddPublisherFromReadCommandStamped: faild to create function \""

@@ -4,6 +4,7 @@
 /*
   $Id: mtsROSBridge.cpp 4363 2013-07-16 20:32:30Z zchen24 $
 
+  Modified by Adithya Murali, UC Berkeley, 2014-08-15
   Author(s):  Anton Deguet, Zihan Chen
   Created on: 2013-05-21
 
@@ -130,6 +131,54 @@ bool mtsROSBridge::AddSubscriberToVoidCommand(const std::string &interfaceRequir
       return false;
     }
     Subscribers.push_back(newSubscriber);
+    return true;
+}
+
+bool mtsROSBridge::AddJointPublisher(const std::string & interfaceRequiredName,
+                                     const std::string &functionName,
+                                     const std::string & interfaceRequiredName2,
+                                                                const std::string & functionName2,
+                                                                const std::vector<std::string> &jointNames) {
+    // check if the interface exists of try to create one
+    mtsInterfaceRequired * interfaceRequired = this->GetInterfaceRequired(interfaceRequiredName);
+    if (!interfaceRequired) {
+        interfaceRequired = this->AddInterfaceRequired(interfaceRequiredName);
+    }
+    if (!interfaceRequired) {
+        ROS_ERROR("mtsROS::addJointPublisher: failed to create required interface.");
+        CMN_LOG_CLASS_INIT_ERROR << "addJointPublisher: failed to create required interface \""
+                                 << interfaceRequiredName << "\"" << std::endl;
+        return false;
+    }
+
+    mtsInterfaceRequired * interfaceRequired2 = this->GetInterfaceRequired(interfaceRequiredName2);
+    if (!interfaceRequired2) {
+        interfaceRequired2 = this->AddInterfaceRequired(interfaceRequiredName2);
+    }
+    if (!interfaceRequired2) {
+        ROS_ERROR("mtsROS::addJointPublisher: failed to create required interface2.");
+        CMN_LOG_CLASS_INIT_ERROR << "addJointPublisher: failed to create required interface2 \""
+                                 << interfaceRequiredName2 << "\"" << std::endl;
+        return false;
+    }
+
+    mtsROSJointPublisher * newPublisher = new mtsROSJointPublisher(*(this->Node),jointNames);
+
+    if (!interfaceRequired->AddFunction(functionName, newPublisher->Function)) {
+        ROS_ERROR("mtsROS::addJointPublisher: failed to create function.");
+        CMN_LOG_CLASS_INIT_ERROR << "addJointPublisher: failed to create function \""
+                                 << functionName << "\"" << std::endl;
+        delete newPublisher;
+        return false;
+    }
+    if (!interfaceRequired2->AddFunction(functionName2, newPublisher->Function2)) {
+        ROS_ERROR("mtsROS::addJointPublisher: failed to create function2.");
+        CMN_LOG_CLASS_INIT_ERROR << "addJointPublisher: failed to create function \""
+                                 << functionName2 << "\"" << std::endl;
+        delete newPublisher;
+        return false;
+    }
+    PublishersStamped.push_back(newPublisher);
     return true;
 }
 

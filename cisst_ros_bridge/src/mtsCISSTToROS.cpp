@@ -4,6 +4,7 @@
 /*
   $Id: mtsCISSTToROS.cpp 4375 2013-07-26 16:13:06Z zchen24 $
 
+  Modified by Adithya Murali, UC Berkeley, 2014-08-15
   Author(s):  Anton Deguet, Zihan Chen
   Created on: 2013-05-21
 
@@ -133,6 +134,30 @@ void mtsCISSTToROS(const prmPositionJointGet & cisstData, sensor_msgs::JointStat
     for (unsigned int i = 0; i < cisstData.Position().size(); ++i) {
         rosData.position[i] = cisstData.Position().Element(i);
     }
+}
+
+void mtsCISSTToROS(const prmPositionJointGet & cisstData, const prmPositionJointGet & cisstData2, sensor_msgs::JointState & rosData)
+{
+    rosData.position.resize(cisstData.Position().size() + cisstData2.Position().size());
+    for (unsigned int i = 0; i < cisstData.Position().size(); ++i) {
+        rosData.position[i] = cisstData.Position().Element(i);
+    }
+    for (unsigned int i = 0; i < cisstData2.Position().size(); ++i) {
+        rosData.position[i + cisstData.Position().size()] = cisstData2.Position().Element(i);
+    }
+//    rosData.name.push_back("two_outer_pitch_joint_3"); rosData.position.push_back(0);
+//    rosData.name.push_back("one_outer_pitch_joint_4"); rosData.position.push_back(0);
+
+//    rosData.name.push_back("one_outer_pitch_joint_5"); rosData.position.push_back(0);
+//    rosData.name.push_back("one_outer_pitch_joint_2"); rosData.position.push_back(0);
+//    rosData.name.push_back("one_outer_pitch_joint_3"); rosData.position.push_back(0);
+//    rosData.name.push_back("two_outer_pitch_joint_2"); rosData.position.push_back(0);
+//    rosData.name.push_back("two_outer_wrist_open_angle_joint_2"); rosData.position.push_back(0);
+//    rosData.name.push_back("one_outer_wrist_open_angle_joint_2"); rosData.position.push_back(0);
+//    rosData.name.push_back("two_outer_pitch_joint_4"); rosData.position.push_back(0);
+//    rosData.name.push_back("two_outer_pitch_joint_5"); rosData.position.push_back(0);
+
+
 }
 
 
